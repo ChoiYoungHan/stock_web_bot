@@ -51,7 +51,7 @@ export function IndicatorSettingsModal({ open, onClose, config, onSave }: Indica
           지표 설정
         </h2>
         <p className="mt-1 text-xs text-muted">
-          SMA 기간(쉼표 구분), 볼린저, RSI, 시그널 임계값. 저장 시 차트·기술적 분석에 반영됩니다.
+          SMA·볼린저·RSI 및 시그널 임계값. 저장 시 차트·기술 요약에 반영됩니다. (차트 타점은 B/S만 표시)
         </p>
 
         <form
@@ -123,7 +123,7 @@ export function IndicatorSettingsModal({ open, onClose, config, onSave }: Indica
             </label>
           </div>
           <label className="block text-xs text-muted">
-            종가·SMA 돌파 시그널 기간
+            SMA 돌파 기간(저장만, 차트 마커 없음)
             <input
               name="signalMaCrossPeriod"
               type="number"

@@ -22,7 +22,9 @@ export function AIEngineStrip({
           {loadingTechnical ? (
             <p className="mt-2 h-16 animate-pulse rounded bg-card-border/40" />
           ) : (
-            <p className="mt-2 text-sm leading-relaxed text-foreground/90">{technical || "—"}</p>
+            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+              {technical || "—"}
+            </p>
           )}
         </article>
         <article className="rounded-xl border border-card-border bg-[#1a1a1a] p-4">

@@ -73,7 +73,7 @@ export function StockDetailClient({ symbol, market }: StockDetailClientProps) {
     const indicatorBlock = buildTechnicalAnalysisNarrative(closes, snap?.price, indicatorConfig);
     if (!quant) return indicatorBlock;
     const expert = buildExpertTechnicalParagraph(quant);
-    return `${expert} ${indicatorBlock}`;
+    return `${expert}\n${indicatorBlock}`;
   }, [chartQ.data, chartDailyQ.data, timeframe, snap?.price, indicatorConfig, quant]);
 
   return (

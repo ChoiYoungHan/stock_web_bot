@@ -4,24 +4,23 @@ import { computeRSISeries } from "@/lib/market-data/technical-indicators";
 import { scannerBuySignalsAtBarIndex } from "@/lib/analysis/quant-signals";
 import type { SeriesMarker, Time } from "lightweight-charts";
 
-function rollingSMAAtIndex(closes: number[], i: number, period: number): number | null {
-  if (i + 1 < period) return null;
-  const slice = closes.slice(i - period + 1, i + 1);
-  return slice.reduce((a, b) => a + b, 0) / period;
-}
+/** 같은 유형 마커 사이 최소 봉 간격(과밀 표시 완화) */
+const MIN_BARS_BUY = 22;
+const MIN_BARS_SELL = 16;
 
 /**
- * Pine Script 스타일: RSI 과매도·과매수, SMA 상·하향 돌파.
- * 매수(B) 마커는 스캐너와 동일한 정밀 신호(과매도 반등·볼밴 지지·상승 다이버전스)와 동기화.
+ * 차트 타점: 과매도·볼밴·다이버전스 기반 매수(B), RSI 과매수 역통과 매도(S).
+ * SMA 교차 마커는 밀도가 높아 제외. 연속 신호는 최소 간격으로만 표시.
  */
 export function buildPineStyleMarkers(candles: CandleBar[], cfg: ChartIndicatorConfig): SeriesMarker<Time>[] {
   if (candles.length < 10) return [];
 
   const closes = candles.map((c) => c.close);
   const rsi = computeRSISeries(closes, cfg.rsiPeriod);
-  const pMa = cfg.signalMaCrossPeriod;
 
   const markers: SeriesMarker<Time>[] = [];
+  let lastBuyIdx = -MIN_BARS_BUY;
+  let lastSellIdx = -MIN_BARS_SELL;
 
   for (let i = 1; i < candles.length; i++) {
     const t = candles[i]!.time as Time;
@@ -29,55 +28,26 @@ export function buildPineStyleMarkers(candles: CandleBar[], cfg: ChartIndicatorC
     const r1 = rsi[i];
 
     const buy = scannerBuySignalsAtBarIndex(candles, i);
-    if (buy.oversoldBounce || buy.bbLowerSupport || buy.bullishDivergence) {
-      const parts: string[] = [];
-      if (buy.oversoldBounce) parts.push("RSI");
-      if (buy.bbLowerSupport) parts.push("BB");
-      if (buy.bullishDivergence) parts.push("DIV");
+    if ((buy.oversoldBounce || buy.bbLowerSupport || buy.bullishDivergence) && i - lastBuyIdx >= MIN_BARS_BUY) {
+      lastBuyIdx = i;
       markers.push({
         time: t,
         position: "belowBar",
         color: "#22c55e",
         shape: "arrowUp",
-        text: parts.length ? `B·${parts.join("+")}` : "B",
+        text: "B",
       });
     }
 
     if (r0 != null && r1 != null) {
-      if (r0 > cfg.signalRsiSell && r1 <= cfg.signalRsiSell) {
+      if (r0 > cfg.signalRsiSell && r1 <= cfg.signalRsiSell && i - lastSellIdx >= MIN_BARS_SELL) {
+        lastSellIdx = i;
         markers.push({
           time: t,
           position: "aboveBar",
           color: "#ef4444",
           shape: "arrowDown",
           text: "S",
-        });
-      }
-    }
-
-    const sma0 = rollingSMAAtIndex(closes, i - 1, pMa);
-    const sma1 = rollingSMAAtIndex(closes, i, pMa);
-    const c0 = closes[i - 1]!;
-    const c1 = closes[i]!;
-
-    if (sma0 != null && sma1 != null) {
-      if (c0 <= sma0 && c1 > sma1) {
-        markers.push({
-          time: t,
-          position: "belowBar",
-          color: "#38bdf8",
-          shape: "circle",
-          text: "MA↑",
-        });
-      }
-
-      if (c0 >= sma0 && c1 < sma1) {
-        markers.push({
-          time: t,
-          position: "aboveBar",
-          color: "#f97316",
-          shape: "circle",
-          text: "MA↓",
         });
       }
     }

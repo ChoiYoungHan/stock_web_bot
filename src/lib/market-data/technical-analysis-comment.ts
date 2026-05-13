@@ -13,19 +13,19 @@ export interface QuoteVolumeContext {
 }
 
 function bollingerZone(pctB: number): string {
-  if (pctB >= 0.95) return "상단 밴드 제약 구간";
-  if (pctB >= 0.62) return "상단 밴드 쪽";
-  if (pctB <= 0.05) return "하단 밴드 제약 구간";
-  if (pctB <= 0.38) return "하단 밴드 쪽";
-  return "밴드 중심부";
+  if (pctB >= 0.95) return "상단 압박";
+  if (pctB >= 0.62) return "상단권";
+  if (pctB <= 0.05) return "하단 지지";
+  if (pctB <= 0.38) return "하단권";
+  return "중간권";
 }
 
 function rsiRemark(rsi: number, oversold: number, overbought: number): string {
-  if (rsi < oversold) return "과매도 레벨";
-  if (rsi <= oversold + 8) return "과매도 인접";
-  if (rsi > overbought) return "과매수 레벨";
-  if (rsi >= overbought - 8) return "과매수 인접";
-  return "중립 레인지";
+  if (rsi < oversold) return "과매도";
+  if (rsi <= oversold + 8) return "과매도 근처";
+  if (rsi > overbought) return "과매수";
+  if (rsi >= overbought - 8) return "과매수 근처";
+  return "중립";
 }
 
 /** 스캐너 카드: 고정 파라미터(14·20·2σ) */
@@ -119,39 +119,37 @@ function linearSlopeCloses(closes: number[]): number {
   return (m * sumXY - sumX * sumY) / denom;
 }
 
-/** 상세 화면용: 추세 방향·가격 vs 이평만 짧게 서술 */
+/** 상세 화면용: 한 줄 요약(추세·이평·RSI·밴드) */
 export function buildTechnicalAnalysisNarrative(
   closes: number[],
   currentPrice: number | undefined,
   cfg: ChartIndicatorConfig,
 ): string {
   if (closes.length < cfg.bbPeriod + 5) {
-    return `일봉 ${closes.length}개로는 추세·밴드 요약이 제한됩니다.`;
+    return `봉 수 ${closes.length}개 — 추세·밴드 요약은 ${cfg.bbPeriod + 5}봉 이상일 때 표시됩니다.`;
   }
 
   const price = currentPrice ?? closes.at(-1) ?? 0;
   const slope = linearSlopeCloses(closes);
   const slopePct = closes.at(-1) ? (slope / Math.abs(closes.at(-1)!)) * 100 : 0;
-  let trendKo = "횡보에 가깝습니다";
-  if (slopePct > 0.04) trendKo = "완만한 상승 추세입니다";
-  else if (slopePct < -0.04) trendKo = "완만한 하락 추세입니다";
+  const trendShort = slopePct > 0.04 ? "상승" : slopePct < -0.04 ? "하락" : "횡보";
 
   const rsiVal = computeRSI(closes, cfg.rsiPeriod);
   const bb = computeBollinger(closes, cfg.bbPeriod, cfg.bbStdMult);
   const sma20 = computeSMA(closes, 20);
 
-  const parts: string[] = [];
-  parts.push(`최근 종가 기준 추세선(선형 근사)은 ${trendKo}.`);
+  const bits: string[] = [`추세 ${trendShort}`];
   if (sma20 != null && price) {
     const rel = ((price / sma20) * 100 - 100).toFixed(1);
-    parts.push(`현재가는 20일 이평선 대비 약 ${rel}% 위치입니다.`);
+    const sign = rel.startsWith("-") ? "" : "+";
+    bits.push(`20일선 ${sign}${rel}%`);
   }
   if (rsiVal != null) {
-    parts.push(`RSI(${cfg.rsiPeriod})는 ${rsiVal.toFixed(0)}으로 ${rsiRemark(rsiVal, cfg.signalRsiBuy, cfg.signalRsiSell)} 구간입니다.`);
+    bits.push(`RSI ${rsiVal.toFixed(0)}(${rsiRemark(rsiVal, cfg.signalRsiBuy, cfg.signalRsiSell)})`);
   }
   if (bb) {
-    parts.push(`볼린저 밴드상 가격은 ${bollingerZone(bb.pctB)}에 있습니다.`);
+    bits.push(`밴드 ${bollingerZone(bb.pctB)}`);
   }
 
-  return parts.join(" ");
+  return bits.join(" · ");
 }

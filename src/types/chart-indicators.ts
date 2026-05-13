@@ -11,7 +11,7 @@ export interface ChartIndicatorConfig {
   signalRsiBuy: number;
   /** RSI 과매수 역통과(매도 시그널) 기준 */
   signalRsiSell: number;
-  /** 종가가 이 기간 SMA 상향 돌파 시 매수 마커 */
+  /** (차트 마커 미사용) 이전 SMA 돌파 시그널 기간 — 설정 호환용 */
   signalMaCrossPeriod: number;
 }
 

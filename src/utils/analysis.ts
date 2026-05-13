@@ -347,28 +347,22 @@ export function rowPassesStrategyAnd(selected: Set<ScannerStrategyId>, row: { qu
 }
 
 export function buildExpertTechnicalParagraph(q: QuantSnapshot): string {
-  const regimeKo =
-    q.regime === "bull" ? "지수 국면은 상승 추세로 분류" : q.regime === "bear" ? "지수 국면은 하락 추세로 분류" : "지수 국면은 중립";
-  const top = q.rationale.slice(0, 3).join(" ");
-  const rationaleMore = q.rationale.length > 3 ? ` ${q.rationale.length - 3}개 부가 팩터가 동시에 정렬.` : "";
+  const regime =
+    q.regime === "bull" ? "장 국면 상승" : q.regime === "bear" ? "장 국면 약세" : "장 국면 중립";
   if (!q.score) {
-    return `${regimeKo}되었으며, 현재 일봉 패턴은 멀티팩터 상위 구간 진입 신호가 제한적입니다.`;
+    return `${regime} · 퀀트 신호 약함`;
   }
-  const confidenceTail =
-    q.confidence >= 85
-      ? " 기술적 반등 가능성이 높은 구간으로 판단됩니다."
-      : q.confidence >= 65
-        ? " 다수 팩터가 정렬된 구간입니다."
-        : "";
-  const combo =
-    q.flags.bullishDivergence && q.flags.macdGoldenCross
-      ? " RSI 상승 다이버전스와 MACD 골든크로스가 동시에 포착되었습니다."
-      : "";
-  const rev =
-    q.flags.reversalThesis && q.reversalThesisScore != null
-      ? ` 저점 부근·단기 하락선 이탈(전환) 가설 점수 ${q.reversalThesisScore}점이 함께 잡혔습니다.`
-      : q.flags.nearSwingLow || q.flags.trendBreakUp
-        ? ` 최근 스윙 저점 근접(${q.flags.nearSwingLow ? "예" : "아니오"})·단기 추세 상향 꺾임(${q.flags.trendBreakUp ? "예" : "아니오"}) 조합을 점검 중입니다.`
-        : "";
-  return `${regimeKo}되었습니다. 멀티팩터 종합점수 ${q.score}점, 신뢰도 ${q.confidence}%.${combo}${rev} ${top}${rationaleMore}${confidenceTail}`;
+  const bits = [`${regime}`, `퀀트 ${q.score}점`, `신뢰도 ${q.confidence}%`];
+  if (q.flags.reversalThesis && q.reversalThesisScore != null) {
+    bits.push(`전환 후보 ${q.reversalThesisScore}점`);
+  } else if (q.flags.nearSwingLow || q.flags.trendBreakUp) {
+    const lo = q.flags.nearSwingLow ? "저가권" : "";
+    const br = q.flags.trendBreakUp ? "단기 돌파" : "";
+    const hint = [lo, br].filter(Boolean).join("·");
+    if (hint) bits.push(hint);
+  }
+  if (q.flags.bullishDivergence && q.flags.macdGoldenCross) {
+    bits.push("다이버전스+MACD");
+  }
+  return bits.join(" · ");
 }
