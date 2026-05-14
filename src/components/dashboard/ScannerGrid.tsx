@@ -53,10 +53,12 @@ export function ScannerGrid({ market, selectedStrategies }: ScannerGridProps) {
   }
 
   const safeRows = rows ?? [];
-  const hasCachedPayload = data != null;
-  const isInitialLoad = isPending && !hasCachedPayload;
-  const showBlockingOverlay = isFetching && !hasCachedPayload;
-  const showContent = !isInitialLoad;
+  const isInitialLoad = isPending && rows == null;
+  const dataMatchesTab = data != null && data.market === market;
+  /** 탭 전환·첫 로드: 전체 로딩. 동일 시장 5분 백그라운드 갱신은 오버레이 없음 */
+  const showBlockingOverlay =
+    isFetching && (!(data != null && data.market === market) || isInitialLoad);
+  const showContent = !isInitialLoad && (!showBlockingOverlay || dataMatchesTab);
 
   const updated = new Date(dataUpdatedAt).toLocaleTimeString("ko-KR", {
     hour: "2-digit",
