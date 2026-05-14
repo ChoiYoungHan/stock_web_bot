@@ -42,7 +42,9 @@ export function useStockChart(
     queryFn: () => fetchChart(symbol, market, timeframe),
     enabled,
     staleTime,
+    gcTime: 60 * 60 * 1000,
     refetchInterval,
+    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
 }

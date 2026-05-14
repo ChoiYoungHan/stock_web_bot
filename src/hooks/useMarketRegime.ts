@@ -13,6 +13,8 @@ export function useMarketRegime(market: MarketTab) {
   return useQuery({
     queryKey: ["market-regime", market],
     queryFn: () => fetchRegime(market),
-    staleTime: 60_000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }

@@ -14,6 +14,8 @@ export function useStockFundamentals(symbol: string, market: MarketTab) {
     queryKey: ["stock-fundamentals", market, symbol],
     queryFn: () => fetchFundamentals(symbol, market),
     staleTime: 300_000,
+    gcTime: 60 * 60 * 1000,
     refetchInterval: 300_000,
+    refetchOnWindowFocus: false,
   });
 }

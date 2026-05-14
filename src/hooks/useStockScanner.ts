@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { MarketTab, ScannerStock } from "@/types/stock";
 import type { ScannerStrategyId } from "@/types/quant";
 
-const STALE_MS = 4 * 60 * 1000;
+const STALE_MS = 5 * 60 * 1000;
 const REFETCH_MS = 5 * 60 * 1000;
 
 export interface StockScannerPayload {
@@ -34,9 +34,9 @@ export function useStockScanner(market: MarketTab, selectedStrategies: Set<Scann
     queryKey: ["stock-scanner", market, strategyKey],
     queryFn: () => fetchScanner(market, selectedStrategies),
     staleTime: STALE_MS,
-    gcTime: 15 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
     refetchInterval: REFETCH_MS,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
 }

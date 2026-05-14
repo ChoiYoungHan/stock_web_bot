@@ -53,8 +53,9 @@ export function ScannerGrid({ market, selectedStrategies }: ScannerGridProps) {
   }
 
   const safeRows = rows ?? [];
-  const isInitialLoad = isPending && rows == null;
-  const showBlockingOverlay = isFetching;
+  const hasCachedPayload = data != null;
+  const isInitialLoad = isPending && !hasCachedPayload;
+  const showBlockingOverlay = isFetching && !hasCachedPayload;
   const showContent = !isInitialLoad;
 
   const updated = new Date(dataUpdatedAt).toLocaleTimeString("ko-KR", {
