@@ -12,6 +12,28 @@ interface ScannerGridProps {
   selectedStrategies: Set<ScannerStrategyId>;
 }
 
+function ScannerLoadingOverlay() {
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex cursor-wait items-center justify-center bg-black/55 backdrop-blur-[2px]"
+      role="alertdialog"
+      aria-modal="true"
+      aria-busy="true"
+      aria-labelledby="scanner-loading-title"
+    >
+      <div className="pointer-events-none flex max-w-sm flex-col items-center gap-5 rounded-2xl border border-card-border bg-[#121212] px-12 py-10 shadow-2xl">
+        <div
+          className="h-12 w-12 animate-spin rounded-full border-[3px] border-card-border border-t-accent"
+          aria-hidden
+        />
+        <p id="scanner-loading-title" className="text-center text-base font-medium text-foreground">
+          데이터를 가져오고 있습니다..
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function ScannerGrid({ market, selectedStrategies }: ScannerGridProps) {
   const { data, isPending, isFetching, isError, dataUpdatedAt } = useStockScanner(market, selectedStrategies);
 
@@ -22,21 +44,6 @@ export function ScannerGrid({ market, selectedStrategies }: ScannerGridProps) {
     return rows.filter((r) => rowPassesStrategyAnd(selectedStrategies, r));
   }, [rows, selectedStrategies]);
 
-  const showBlockingSkeleton = isPending && rows == null;
-
-  if (showBlockingSkeleton) {
-    return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {Array.from({ length: 10 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-40 animate-pulse rounded-xl border border-card-border bg-card/50"
-          />
-        ))}
-      </div>
-    );
-  }
-
   if (isError && rows == null) {
     return (
       <p className="rounded-xl border border-negative/30 bg-negative/10 px-4 py-6 text-center text-sm text-negative">
@@ -46,6 +53,9 @@ export function ScannerGrid({ market, selectedStrategies }: ScannerGridProps) {
   }
 
   const safeRows = rows ?? [];
+  const isInitialLoad = isPending && rows == null;
+  const showBlockingOverlay = isFetching;
+  const showContent = !isInitialLoad;
 
   const updated = new Date(dataUpdatedAt).toLocaleTimeString("ko-KR", {
     hour: "2-digit",
@@ -57,25 +67,29 @@ export function ScannerGrid({ market, selectedStrategies }: ScannerGridProps) {
     data?.marketRegime === "bull" ? "상승" : data?.marketRegime === "bear" ? "하락" : "중립";
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-end gap-2 text-[11px] text-muted">
-        {isFetching && <span className="text-accent">데이터 갱신 중…</span>}
-        <span>
-          마지막 갱신 {updated} · 지수 국면 {regimeLabel} · 표시 {filteredSafe.length}/{safeRows.length}건(서버에서 전환
-          점수 컷·상위만 전달) · 매수 알림은 텔레그램(5분 스캔)
-        </span>
-      </div>
-      {filteredSafe.length === 0 ? (
-        <p className="rounded-xl border border-card-border bg-[#1a1a1a] px-4 py-8 text-center text-sm text-muted">
-          선택한 전략 조건을 만족하는 종목이 없습니다.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {filteredSafe.map((stock) => (
-            <StockCard key={`${stock.market}-${stock.symbol}`} stock={stock} />
-          ))}
+    <>
+      {showBlockingOverlay ? <ScannerLoadingOverlay /> : null}
+      {showContent ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 text-[11px] text-muted">
+            <span>
+              마지막 갱신 {updated} · 지수 국면 {regimeLabel} · 표시 {filteredSafe.length}/{safeRows.length}건(서버에서 전환
+              점수 컷·상위만 전달) · 매수 알림은 텔레그램(5분 스캔)
+            </span>
+          </div>
+          {filteredSafe.length === 0 ? (
+            <p className="rounded-xl border border-card-border bg-[#1a1a1a] px-4 py-8 text-center text-sm text-muted">
+              선택한 전략 조건을 만족하는 종목이 없습니다.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {filteredSafe.map((stock) => (
+                <StockCard key={`${stock.market}-${stock.symbol}`} stock={stock} />
+              ))}
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      ) : null}
+    </>
   );
 }
