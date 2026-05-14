@@ -1,5 +1,6 @@
 import { StockDetailClient } from "@/components/stock/StockDetailClient";
 import type { MarketTab } from "@/types/stock";
+import { parseMarketTabParam } from "@/lib/market-data/market-tab";
 
 interface StockDetailPageProps {
   params: Promise<{ symbol: string }>;
@@ -7,7 +8,7 @@ interface StockDetailPageProps {
 }
 
 function parseMarket(raw: string | undefined): MarketTab {
-  return raw === "us" ? "us" : "domestic";
+  return parseMarketTabParam(raw ?? null);
 }
 
 export default async function StockDetailPage({ params, searchParams }: StockDetailPageProps) {

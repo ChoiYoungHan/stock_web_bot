@@ -37,7 +37,12 @@ export function StockDetailClient({ symbol, market }: StockDetailClientProps) {
     setIndicatorConfig(loadChartIndicatorConfig());
   }, []);
 
-  const marketLabel = market === "domestic" ? "국내장 (KOSPI/KOSDAQ 상위 500)" : "미국장 (S&P 500)";
+  const marketLabel =
+    market === "domestic"
+      ? "국내장 (KOSPI/KOSDAQ 상위 500)"
+      : market === "crypto"
+        ? "코인 (빗썸 KRW · 거래대금 상위)"
+        : "미국장 (S&P 500)";
   const snap = data?.snapshot;
   const up = (snap?.changePercent ?? 0) >= 0;
 
@@ -88,7 +93,7 @@ export function StockDetailClient({ symbol, market }: StockDetailClientProps) {
           {snap && (
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <span className="font-mono text-xl font-semibold tabular-nums">
-                {market === "domestic"
+                {market === "domestic" || market === "crypto"
                   ? `${snap.price.toLocaleString("ko-KR")}원`
                   : `${snap.currency} ${snap.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               </span>

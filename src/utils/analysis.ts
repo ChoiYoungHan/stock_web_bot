@@ -69,7 +69,9 @@ export function classifyIndexRegime(indexCloses: number[]): MarketRegime {
 }
 
 function tradeValueThreshold(market: MarketTab): number {
-  return market === "domestic" ? 2e9 : 2e6;
+  if (market === "domestic") return 2e9;
+  if (market === "crypto") return 5e8;
+  return 2e6;
 }
 
 function smaAtEnd(values: number[], period: number): number | null {

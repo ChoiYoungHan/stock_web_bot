@@ -5,6 +5,7 @@ import type { MarketTab } from "@/types/stock";
 const TABS: { id: MarketTab; label: string; hint: string }[] = [
   { id: "domestic", label: "국내장", hint: "KOSPI/KOSDAQ 상위 500" },
   { id: "us", label: "미국장", hint: "S&P 500" },
+  { id: "crypto", label: "코인", hint: "빗썸 KRW · 거래대금 상위" },
 ];
 
 interface MarketTabsProps {

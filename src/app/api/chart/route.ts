@@ -1,20 +1,16 @@
 import { NextResponse } from "next/server";
-import type { MarketTab } from "@/types/stock";
 import { parseChartTimeframe } from "@/types/chart-timeframe";
 import { fetchChartForApi } from "@/services/stockService";
 import { resolveYahooSymbol } from "@/lib/market-data/resolve-yahoo-symbol";
+import { parseMarketTabParam } from "@/lib/market-data/market-tab";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function parseMarket(value: string | null): MarketTab {
-  return value === "us" ? "us" : "domestic";
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get("symbol")?.trim();
-  const market = parseMarket(searchParams.get("market"));
+  const market = parseMarketTabParam(searchParams.get("market"));
   const timeframe = parseChartTimeframe(searchParams.get("timeframe"));
 
   if (!symbol) {

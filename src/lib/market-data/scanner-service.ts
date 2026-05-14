@@ -4,12 +4,13 @@ import { getMockScannerRows } from "@/lib/mock-scanner";
 import { KisDomesticScannerSource } from "./providers/kis-scanner-source";
 import { YahooDomesticScannerSource } from "./providers/yahoo-domestic-scanner";
 import { YahooUsSp500ScannerSource } from "./providers/yahoo-us-sp500-scanner";
+import { BithumbCryptoScannerSource } from "./providers/bithumb-crypto-scanner";
 import { readKisEnv } from "./providers/kis-yahoo-types";
 import { resolveMarketRegime } from "@/lib/market-data/index-regime";
 import { getDomesticScannerMappings, type DomesticYahooMapping } from "@/lib/market-data/domestic-symbols";
 import { rowPassesStrategyAnd } from "@/utils/analysis";
 
-export type ScannerDataSourceTag = "yahoo" | "kis" | "mock";
+export type ScannerDataSourceTag = "yahoo" | "kis" | "mock" | "bithumb";
 
 export interface ScannerPayload {
   market: MarketTab;
@@ -133,6 +134,11 @@ async function getDomesticRowsWithSource(
   return { rows, source: "yahoo" };
 }
 
+async function getCryptoRowsWithSource(regime: MarketRegime): Promise<{ rows: ScannerStock[]; source: ScannerDataSourceTag }> {
+  const rows = await new BithumbCryptoScannerSource().getScannerRows(regime);
+  return { rows, source: "bithumb" };
+}
+
 async function getUsRowsWithSource(regime: MarketRegime): Promise<{ rows: ScannerStock[]; source: ScannerDataSourceTag }> {
   const rows = await new YahooUsSp500ScannerSource().getScannerRows(regime);
   return { rows, source: "yahoo" };
@@ -221,7 +227,11 @@ export async function collectFullScannerPayload(market: MarketTab): Promise<Scan
 
   try {
     const { rows: rawRows, source } =
-      market === "domestic" ? await getDomesticRowsWithSource(regime) : await getUsRowsWithSource(regime);
+      market === "domestic"
+        ? await getDomesticRowsWithSource(regime)
+        : market === "crypto"
+          ? await getCryptoRowsWithSource(regime)
+          : await getUsRowsWithSource(regime);
     const tiered = applyTradeValueTopTier(rawRows);
     const rows = sortScannerRows(tiered);
     return {

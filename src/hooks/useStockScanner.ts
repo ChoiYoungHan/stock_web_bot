@@ -9,7 +9,7 @@ export interface StockScannerPayload {
   market: MarketTab;
   updatedAt: number;
   rows: ScannerStock[];
-  source: "yahoo" | "kis" | "mock";
+  source: "yahoo" | "kis" | "mock" | "bithumb";
   marketRegime: import("@/types/quant").MarketRegime;
 }
 

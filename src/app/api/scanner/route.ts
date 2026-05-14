@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
-import type { MarketTab } from "@/types/stock";
 import { SCANNER_STRATEGY_OPTIONS, type ScannerStrategyId } from "@/types/quant";
 import { buildScannerPayload } from "@/lib/market-data/scanner-service";
+import { parseMarketTabParam } from "@/lib/market-data/market-tab";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const VALID_STRATEGIES = new Set<string>(SCANNER_STRATEGY_OPTIONS.map((o) => o.id));
-
-function parseMarket(value: string | null): MarketTab {
-  return value === "us" ? "us" : "domestic";
-}
 
 function parseStrategies(param: string | null): ScannerStrategyId[] | undefined {
   if (!param?.trim()) return undefined;
@@ -21,7 +17,7 @@ function parseStrategies(param: string | null): ScannerStrategyId[] | undefined 
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const market = parseMarket(searchParams.get("market"));
+  const market = parseMarketTabParam(searchParams.get("market"));
   const strategyIds = parseStrategies(searchParams.get("strategies"));
 
   try {

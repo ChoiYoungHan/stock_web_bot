@@ -1,6 +1,6 @@
 import type { QuantSnapshot } from "@/types/quant";
 
-export type MarketTab = "domestic" | "us";
+export type MarketTab = "domestic" | "us" | "crypto";
 
 export type AnalysisSignal =
   | "ma_cross"

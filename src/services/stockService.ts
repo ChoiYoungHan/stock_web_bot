@@ -69,12 +69,16 @@ export class KisDomesticStockAdapter {
   }
 }
 
-/** 차트 API용 — KIS 구현 전까지는 항상 Yahoo(일봉+분봉 병합). KIS 준비 시 아래 분기만 교체 */
+/** 차트 API용 — 코인은 빗썸 Public, 그 외 Yahoo(또는 KIS 준비 시 국내). */
 export async function fetchChartForApi(
   yahooSymbol: string,
   market: MarketTab,
   timeframe: ChartTimeframeId = "1d",
 ): Promise<ChartResponse> {
+  if (market === "crypto") {
+    const { fetchBithumbChartResponse } = await import("@/lib/market-data/bithumb-chart");
+    return fetchBithumbChartResponse(yahooSymbol, timeframe);
+  }
   const env = getStockServiceEnv();
   if (env.domesticChartBackend === "kis" && market === "domestic" && env.kis) {
     console.warn("[stockService] KIS 국내 차트는 스텁입니다. `KisDomesticStockAdapter` 구현 후 연결하세요. Yahoo로 폴백합니다.");

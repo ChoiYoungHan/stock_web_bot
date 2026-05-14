@@ -2,13 +2,18 @@ import { getYahooFinance } from "@/lib/yahoo-finance-client";
 import type { MarketTab } from "@/types/stock";
 import { classifyIndexRegime } from "@/utils/analysis";
 import type { MarketRegime } from "@/types/quant";
+import { fetchBithumbCandlestick } from "@/lib/market-data/bithumb-public";
 
-const INDEX_YAHOO: Record<MarketTab, string> = {
+const INDEX_YAHOO: Record<Exclude<MarketTab, "crypto">, string> = {
   domestic: "^KS11",
   us: "^GSPC",
 };
 
 export async function fetchIndexCloseSeries(market: MarketTab): Promise<number[]> {
+  if (market === "crypto") {
+    const candles = await fetchBithumbCandlestick("BTC", "24h");
+    return candles.map((c) => c.close);
+  }
   const sym = INDEX_YAHOO[market];
   const yahoo = getYahooFinance();
   const period1 = new Date();

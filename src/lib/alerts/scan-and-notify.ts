@@ -54,8 +54,9 @@ export async function runScanBuyAlerts(market: MarketTab): Promise<{
     const key = `${r.market}:${r.symbol}`;
     if (!shouldNotifyAgain(key)) continue;
 
+    const mLabel = r.market === "domestic" ? "국내" : r.market === "crypto" ? "코인" : "미국";
     const msg = [
-      `[매수·전환 후보] ${r.market === "domestic" ? "국내" : "미국"} ${r.symbol} ${r.name}`,
+      `[매수·전환 후보] ${mLabel} ${r.symbol} ${r.name}`,
       `전환점수 ${r.quant!.reversalThesisScore} / 퀀트 ${r.quant!.score} (신뢰도 ${r.quant!.confidence}%)`,
       `지수국면: ${r.quant!.regime}`,
     ].join("\n");
@@ -72,5 +73,6 @@ export async function runAllMarketScanAlerts(): Promise<Awaited<ReturnType<typeo
   const out: Awaited<ReturnType<typeof runScanBuyAlerts>>[] = [];
   out.push(await runScanBuyAlerts("domestic"));
   out.push(await runScanBuyAlerts("us"));
+  out.push(await runScanBuyAlerts("crypto"));
   return out;
 }

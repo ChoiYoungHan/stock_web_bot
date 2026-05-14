@@ -188,5 +188,37 @@ export function getMockScannerRows(market: MarketTab): ScannerStock[] {
     },
   ];
 
-  return market === "domestic" ? domestic : us;
+  const crypto: ScannerStock[] = [
+    {
+      symbol: "BTC",
+      name: "BTC/KRW",
+      market: "crypto",
+      price: 118000000,
+      changePercent: 0.2,
+      signals: ["rsi", "bollinger"],
+      signalSummary: "RSI 중립, 밴드 중심부.",
+    },
+    {
+      symbol: "ETH",
+      name: "ETH/KRW",
+      market: "crypto",
+      price: 4200000,
+      changePercent: -0.5,
+      signals: ["volume"],
+      signalSummary: "거래량 10일 평균 대비 130%.",
+    },
+    {
+      symbol: "XRP",
+      name: "XRP/KRW",
+      market: "crypto",
+      price: 3200,
+      changePercent: 1.2,
+      signals: ["rsi"],
+      signalSummary: "RSI(14)=42 (중립 레인지).",
+    },
+  ];
+
+  if (market === "domestic") return domestic;
+  if (market === "crypto") return crypto;
+  return us;
 }

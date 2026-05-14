@@ -67,6 +67,13 @@ export function resolveDisplayStockName(
   localSymbol: string,
 ): string {
   const raw = sanitizeRawQuoteName(rawShortOrLongName);
+
+  if (market === "crypto") {
+    const s = localSymbol.trim().toUpperCase();
+    if (raw.length > 0) return raw.length > 64 ? `${raw.slice(0, 61)}…` : raw;
+    return `${s}/KRW`;
+  }
+
   const local = market === "domestic" ? normalizeSixDigit(localSymbol) : localSymbol.split(".")[0]!.toUpperCase();
 
   if (market === "domestic") {

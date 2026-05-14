@@ -45,7 +45,47 @@ function buildFundamentalNarrative(metrics: FundamentalMetrics): string {
   return `${hints.join(" · ")}. ${verdict}`;
 }
 
+export async function fetchCryptoDetailBundle(symbol: string): Promise<StockDetailBundle> {
+  const { fetchBithumbSingleTicker } = await import("@/lib/market-data/bithumb-public");
+  const t = await fetchBithumbSingleTicker(symbol);
+  const price = Number(t.closing_price) || 0;
+  const changePercent = Number(t.fluctate_rate_24H) || 0;
+  const sym = symbol.trim().toUpperCase();
+  const name = resolveDisplayStockName(undefined, "crypto", sym);
+
+  const metrics: FundamentalMetrics = {
+    trailingPE: null,
+    forwardPE: null,
+    priceToBook: null,
+    returnOnEquity: null,
+    profitMargins: null,
+    operatingMargins: null,
+    debtToEquity: null,
+    revenue: null,
+    revenueCurrency: null,
+  };
+
+  const narratives: AnalysisNarratives = {
+    technical: undefined,
+    fundamental:
+      "가상자산은 PER·PBR 등 주식형 재무지표가 적용되지 않습니다. 빗썸 KRW 마켓 시세·거래대금 기준입니다.",
+  };
+
+  return {
+    snapshot: {
+      name,
+      symbol: sym,
+      price,
+      changePercent,
+      currency: "KRW",
+    },
+    metrics,
+    narratives,
+  };
+}
+
 export async function fetchStockDetailBundle(symbol: string, market: MarketTab): Promise<StockDetailBundle> {
+  if (market === "crypto") return fetchCryptoDetailBundle(symbol);
   const ySym = resolveYahooSymbol(symbol, market);
   const yahoo = getYahooFinance();
 

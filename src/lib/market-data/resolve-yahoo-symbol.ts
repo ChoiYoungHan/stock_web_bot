@@ -3,6 +3,9 @@ import { getDomesticScannerMappings } from "./domestic-symbols";
 
 export function resolveYahooSymbol(symbol: string, market: MarketTab): string {
   const trimmed = symbol.trim();
+  if (market === "crypto") {
+    return trimmed.toUpperCase();
+  }
   if (market === "us") {
     return trimmed.includes(".") ? trimmed : trimmed.toUpperCase();
   }
@@ -13,6 +16,7 @@ export function resolveYahooSymbol(symbol: string, market: MarketTab): string {
 }
 
 export function localSymbolFromYahoo(yahooSymbol: string, market: MarketTab): string {
+  if (market === "crypto") return yahooSymbol.replace(/_KRW$/i, "").toUpperCase();
   if (market === "us") return yahooSymbol.split(".")[0]!.toUpperCase();
   const base = yahooSymbol.replace(/\.(KS|KQ)$/i, "");
   const hit = getDomesticScannerMappings().find((m) => m.yahoo === yahooSymbol);

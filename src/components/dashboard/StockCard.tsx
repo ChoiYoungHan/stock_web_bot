@@ -10,7 +10,7 @@ interface StockCardProps {
 }
 
 function formatPrice(stock: ScannerStock): string {
-  if (stock.market === "domestic") {
+  if (stock.market === "domestic" || stock.market === "crypto") {
     return `${stock.price.toLocaleString("ko-KR")}원`;
   }
   return `$${stock.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
