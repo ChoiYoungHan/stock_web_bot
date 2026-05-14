@@ -25,7 +25,7 @@ function cryptoScannerTopN(): number {
   return Math.max(20, Math.min(120, v));
 }
 
-const ROW_CONCURRENCY = Math.max(2, Math.min(8, Number(process.env.SCANNER_CANDLE_CONCURRENCY ?? 10)));
+const ROW_CONCURRENCY = Math.max(2, Math.min(12, Number(process.env.SCANNER_CANDLE_CONCURRENCY ?? 10)));
 
 export class BithumbCryptoScannerSource {
   async getScannerRows(regime: MarketRegime): Promise<ScannerStock[]> {

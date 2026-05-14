@@ -5,27 +5,16 @@ import type { MarketRegime } from "@/types/quant";
 import { fetchAnalysisCandles } from "@/lib/market-data/chart-service";
 import { buildScannerTechnicalSnapshot } from "@/lib/market-data/scanner-technical-snapshot";
 import { buildSignalsFromClosesAndQuote } from "@/lib/market-data/technical-analysis-comment";
-import { getYahooFinance } from "@/lib/yahoo-finance-client";
 import type { DomesticYahooMapping } from "@/lib/market-data/domestic-symbols";
 import { localSymbolFromYahoo } from "@/lib/market-data/resolve-yahoo-symbol";
+import { fetchYahooQuoteMap, type YahooQuoteLike } from "@/lib/market-data/yahoo-batch-quote";
 import type { IDomesticQuoteScannerSource } from "./domestic-data-source";
 import { resolveDisplayStockName } from "@/utils/stockUtils";
 import { computeQuantSnapshot } from "@/utils/analysis";
-import { chunkArray, mapWithConcurrency } from "@/lib/utils/promise-pool";
+import { mapWithConcurrency } from "@/lib/utils/promise-pool";
 
-type YahooQuoteLike = {
-  symbol?: string;
-  regularMarketPrice?: number;
-  regularMarketChangePercent?: number;
-  regularMarketVolume?: number;
-  averageDailyVolume10Day?: number;
-  shortName?: string;
-  longName?: string;
-  displayName?: string;
-};
-
-const QUOTE_CHUNK = Math.max(20, Math.min(120, Number(process.env.SCANNER_QUOTE_CHUNK_SIZE ?? 80)));
 const ROW_CONCURRENCY = Math.max(2, Math.min(24, Number(process.env.SCANNER_CANDLE_CONCURRENCY ?? 10)));
+const SCANNER_ANALYSIS_BARS = Math.max(80, Math.min(160, Number(process.env.SCANNER_ANALYSIS_MAX_BARS ?? 110)));
 
 /** Edge 번들에 `fs`가 섞이지 않도록, 유니버스 맵은 호출 측(`scanner-service`)에서만 준비합니다. */
 export class YahooDomesticScannerSource implements IDomesticQuoteScannerSource {
@@ -36,31 +25,16 @@ export class YahooDomesticScannerSource implements IDomesticQuoteScannerSource {
   async getScannerRows(regime: MarketRegime): Promise<ScannerStock[]> {
     const map = this.domesticMap;
     const ySymbols = map.map((m) => m.yahoo);
-    const yahoo = getYahooFinance();
-
-    const quoteByYahoo = new Map<string, YahooQuoteLike>();
-    for (const chunk of chunkArray(ySymbols, QUOTE_CHUNK)) {
-      try {
-        const quotes = await yahoo.quote(chunk);
-        const list = Array.isArray(quotes) ? quotes : [quotes];
-        for (const raw of list) {
-          const q = raw as YahooQuoteLike;
-          const sym = String(q.symbol ?? "").toUpperCase();
-          if (sym) quoteByYahoo.set(sym, q);
-        }
-      } catch (e) {
-        console.warn("[YahooDomesticScanner] quote chunk 실패:", chunk.slice(0, 5), e);
-      }
-    }
+    const quoteByYahoo = await fetchYahooQuoteMap(ySymbols);
 
     const rows = await mapWithConcurrency(map, ROW_CONCURRENCY, async (m) => {
       const ySym = m.yahoo;
       const local = m.local;
-      const q = quoteByYahoo.get(ySym.toUpperCase()) ?? {};
+      const q = quoteByYahoo.get(ySym.toUpperCase()) ?? ({} as YahooQuoteLike);
 
       let candles = [] as Awaited<ReturnType<typeof fetchAnalysisCandles>>;
       try {
-        candles = await fetchAnalysisCandles(ySym, 130);
+        candles = await fetchAnalysisCandles(ySym, { maxBars: SCANNER_ANALYSIS_BARS, light: true });
       } catch (e) {
         console.warn(`[YahooDomesticScanner] 일봉 조회 실패 ${ySym}`, e);
       }

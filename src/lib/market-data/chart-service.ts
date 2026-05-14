@@ -327,11 +327,43 @@ export async function fetchDailyClosePrices(yahooSymbol: string): Promise<number
   return closes;
 }
 
-/** OHLCV 일봉 (퀀트 스코어링·패턴용, 최근 maxBars) — 최신 세션은 분봉 집계로 보정 */
-export async function fetchAnalysisCandles(yahooSymbol: string, maxBars = 130): Promise<CandleBar[]> {
+/** 스캐너 등에서 `fetchAnalysisCandles` 옵션으로 사용 */
+export type FetchAnalysisCandlesOptions = {
+  maxBars?: number;
+  /**
+   * `true`: 일봉만 조회(분봉 병합 생략). 유니버스 대량 스캔 시 Yahoo 호출·지연을 크게 줄임.
+   * 상세 차트·종목 페이지는 기본(full) 유지.
+   */
+  light?: boolean;
+};
+
+/** OHLCV 일봉 (퀀트 스코어링·패턴용, 최근 maxBars) — 기본은 최신 세션 분봉 집계로 보정 */
+export async function fetchAnalysisCandles(
+  yahooSymbol: string,
+  maxBarsOrOpts?: number | FetchAnalysisCandlesOptions,
+): Promise<CandleBar[]> {
+  let maxBars = 130;
+  let light = false;
+  if (typeof maxBarsOrOpts === "number") {
+    maxBars = maxBarsOrOpts;
+  } else if (maxBarsOrOpts != null && typeof maxBarsOrOpts === "object") {
+    if (typeof maxBarsOrOpts.maxBars === "number") maxBars = maxBarsOrOpts.maxBars;
+    if (maxBarsOrOpts.light === true) light = true;
+  }
+
   const yahoo = getYahooFinance();
   const period1 = new Date();
   period1.setFullYear(period1.getFullYear() - 2);
+
+  if (light) {
+    const dailyResult = await yahoo.chart(yahooSymbol, {
+      period1,
+      interval: "1d",
+    });
+    const candles = rawQuotesToDailyLikeCandles(dailyResult.quotes as RawChartBar[]);
+    if (candles.length > maxBars) return candles.slice(-maxBars);
+    return candles;
+  }
 
   const mergeIv = resolveIntradayMergeInterval();
 

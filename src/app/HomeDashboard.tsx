@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useLayoutEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import type { MarketTab } from "@/types/stock";
 import type { ScannerStrategyId } from "@/types/quant";
 import { parseMarketTabParam } from "@/lib/market-data/market-tab";
@@ -12,6 +13,7 @@ import { ScannerGrid } from "@/components/dashboard/ScannerGrid";
 
 function HomeDashboardInner() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const marketKey = searchParams.get("market") ?? "";
 
@@ -25,8 +27,9 @@ function HomeDashboardInner() {
     (m: MarketTab) => {
       setMarket(m);
       router.replace(`/?market=${m}`, { scroll: false });
+      void queryClient.invalidateQueries({ queryKey: ["stock-scanner", m], exact: false });
     },
-    [router],
+    [router, queryClient],
   );
 
   const [strategies, setStrategies] = useState<Set<ScannerStrategyId>>(new Set());
