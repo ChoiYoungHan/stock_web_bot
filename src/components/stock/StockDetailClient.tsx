@@ -114,7 +114,7 @@ export function StockDetailClient({ symbol, market }: StockDetailClientProps) {
           )}
         </div>
         <Link
-          href="/"
+          href={`/?market=${encodeURIComponent(market)}`}
           className="inline-flex min-h-11 items-center justify-center rounded-lg border border-card-border bg-[#1a1a1a] px-4 text-sm font-medium text-foreground transition hover:border-accent/50 hover:text-accent"
         >
           ← 대시보드
